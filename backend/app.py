@@ -12,7 +12,9 @@ DB            = '/tmp/shipments.db'              if IS_VERCEL else os.path.join(
 UPLOAD_FOLDER = '/tmp/uploads'                   if IS_VERCEL else os.path.join(BASE_DIR, 'uploads')
 TEMPLATE_DIR  = os.path.join(BASE_DIR, 'templates')
 
-app = Flask(__name__, template_folder=TEMPLATE_DIR)
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

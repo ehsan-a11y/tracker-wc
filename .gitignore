@@ -6,3 +6,5 @@ venv/
 backend/shipments.db
 backend/uploads/
 .vercel/
+
+.vercel
