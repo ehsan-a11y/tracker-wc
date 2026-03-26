@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker_WC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --primary-light: #a5b4fc;
+            --sidebar-bg: #0d0d1a;
+            --sidebar-w: 240px;
+            --topbar-h: 64px;
+            --body-bg: #f4f6fb;
+            --card: #ffffff;
+            --border: #e8ecf4;
+            --text: #0f172a;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --transit-bg: #eff6ff; --transit-c: #1d4ed8;
+            --delivered-bg: #f0fdf4; --delivered-c: #065f46;
+            --returned-bg: #fffbeb; --returned-c: #92400e;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--body-bg); display: flex; height: 100vh; overflow: hidden; font-size: 0.875rem; color: var(--text); }
+
+        /* ════════════════ SIDEBAR ════════════════ */
+        .sidebar {
+            width: var(--sidebar-w);
+            min-width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 40;
+        }
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 1px; height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(99,102,241,.3), transparent);
+        }
+        .sb-brand {
+            padding: 22px 20px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .sb-logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            border-radius: 12px;
+            display: grid; place-items: center;
+            color: #fff;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(99,102,241,.45);
+        }
+        .sb-brand-text .name { font-size: .95rem; font-weight: 700; color: #fff; letter-spacing: .2px; }
+        .sb-brand-text .sub  { font-size: .68rem; color: rgba(255,255,255,.35); margin-top: 1px; }
+
+        .sb-section { padding: 22px 14px 8px; }
+        .sb-section-label {
+            font-size: .6rem;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.25);
+            padding: 0 8px;
+            margin-bottom: 6px;
+        }
+        .sb-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: rgba(255,255,255,.45);
+            font-size: .84rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background .18s, color .18s;
+            position: relative;
+            margin-bottom: 2px;
+        }
+        .sb-item .sb-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: grid; place-items: center;
+            font-size: .85rem;
+            flex-shrink: 0;
+            transition: background .18s;
+            background: rgba(255,255,255,.04);
+        }
+        .sb-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.8); }
+        .sb-item:hover .sb-icon { background: rgba(255,255,255,.08); }
+        .sb-item.active { background: rgba(99,102,241,.18); color: #fff; }
+        .sb-item.active .sb-icon { background: linear-gradient(135deg, var(--primary), #818cf8); color: #fff; box-shadow: 0 3px 10px rgba(99,102,241,.4); }
+        .sb-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 25%; height: 50%;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sb-divider { height: 1px; background: rgba(255,255,255,.05); margin: 10px 14px; }
+        .sb-bottom { margin-top: auto; padding: 14px; border-top: 1px solid rgba(255,255,255,.05); }
+        .sb-user {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+        }
+        .sb-user-av { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg,#f59e0b,#ef4444); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: .8rem; flex-shrink: 0; }
+        .sb-user-name { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.8); }
+        .sb-user-role { font-size: .66rem; color: rgba(255,255,255,.3); }
+
+        /* ════════════════ MAIN ════════════════ */
+        .app-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* ── Topbar ── */
+        .topbar {
+            height: var(--topbar-h);
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .topbar-page { display: flex; align-items: center; gap: 10px; }
+        .topbar-page-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            display: grid; place-items: center;
+            color: #fff;
+            font-size: .85rem;
+        }
+        .topbar-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .topbar-sub   { font-size: .72rem; color: var(--muted); }
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .topbar-badge {
+            font-size: .75rem; color: #64748b;
+            background: #f8fafc;
+            padding: 5px 13px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .topbar-badge i { color: var(--primary); }
+
+        /* ── Pages ── */
+        .page { display: none; flex: 1; overflow-y: auto; padding: 26px 28px; }
+        .page.active { display: block; }
+        .page::-webkit-scrollbar { width: 5px; }
+        .page::-webkit-scrollbar-thumb { background: #dde1eb; border-radius: 5px; }
+
+        /* ════════════════ DASHBOARD ════════════════ */
+        .dash-welcome {
+            margin-bottom: 22px;
+        }
+        .dash-welcome h2 { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+        .dash-welcome p  { color: var(--muted); font-size: .82rem; margin-top: 3px; }
+
+        /* Stat cards */
+        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 22px; }
+        .stat-card {
+            border-radius: 18px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform .2s, box-shadow .2s;
+            cursor: default;
+        }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.12); }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            right: -18px; top: -18px;
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.12);
+        }
+        .sc-total     { background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+        .sc-transit   { background: linear-gradient(135deg,#2196f3,#1976d2); color:#fff; }
+        .sc-delivered { background: linear-gradient(135deg,#11998e,#38ef7d); color:#fff; }
+        .sc-returned  { background: linear-gradient(135deg,#f7971e,#ffd200); color:#fff; }
+        .sc-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 1.3rem; flex-shrink: 0; }
+        .sc-info .value { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+        .sc-info .label { font-size: .75rem; opacity: .85; margin-top: 4px; font-weight: 500; }
+
+        /* Chart cards */
+        .charts-row { display: grid; grid-template-columns: 1fr 1.8fr; gap: 16px; }
+        .chart-card {
+            background: var(--card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            padding: 22px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        }
+        .chart-card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .chart-card-head h3 {
+            font-size: .9rem; font-weight: 700; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ch-icon {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg,var(--primary),#818cf8);
+            display: grid; place-items: center;
+            color: #fff; font-size: .7rem;
+        }
+        .chart-hint { font-size: .7rem; color: var(--muted); }
+        #statusChartWrap { height: 230px; }
+        #monthChartWrap  { height: 230px; }
+        #statusChart, #monthChart { cursor: pointer; }
+
+        /* ════════════════ SHIPMENTS ════════════════ */
+        .ship-head {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .ship-head h2 { font-size: 1.1rem; font-weight: 800; color: var(--text); flex: 1; }
+        .btn-new {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 11px;
+            padding: 10px 20px;
+            font-size: .84rem;
+            font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(99,102,241,.38);
+            transition: transform .15s, box-shadow .15s;
+            font-family: inherit;
+        }
+        .btn-new:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,.48); }
+
+        .filter-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 6px rgba(0,0,0,.04);
+        }
+        .filter-wrap label { font-size: .68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; display: block; margin-bottom: 4px; }
+        .filter-wrap .fc { border-radius: 9px; border: 1.5px solid var(--border); font-size: .83rem; padding: 7px 11px; font-family: inherit; transition: border-color .2s; background: #f8fafc; }
+        .filter-wrap .fc:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.1); outline: none; }
+        .btn-reset { background: #f1f5f9; border: 1.5px solid var(--border); color: #64748b; border-radius: 9px; padding: 7px 14px; font-size: .82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; transition: background .15s; }
+        .btn-reset:hover { background: #e2e8f0; }
+        .filter-pill { display: none; align-items: center; gap: 6px; background: #ede9fe; border: 1.5px solid #c4b5fd; border-radius: 20px; padding: 5px 13px; font-size: .75rem; font-weight: 700; color: var(--primary); }
+        .pill-x { cursor: pointer; opacity: .6; margin-left: 2px; transition: opacity .15s; }
+        .pill-x:hover { opacity: 1; }
+        .record-count { margin-left: auto; font-size: .75rem; color: var(--muted); font-weight: 600; background: #f1f5f9; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); }
+
+        /* Table */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        }
+        .table-scroll { max-height: calc(100vh - 270px); overflow-y: auto; }
+        .table-scroll::-webkit-scrollbar { width: 5px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 5px; }
+        .data-table { width: auto; min-width: 100%; border-collapse: collapse; font-size: .82rem; table-layout: fixed; }
+        .data-table col.col-id     { width: 58px; }
+        .data-table col.col-date   { width: 128px; }
+        .data-table col.col-awb    { width: 190px; }
+        .data-table col.col-cost   { width: 96px; }
+        .data-table col.col-status { width: 120px; }
+        .data-table col.col-track  { width: 66px; }
+        .data-table thead th {
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
+            font-size: .68rem;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--border);
+            position: sticky; top: 0; z-index: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .data-table tbody tr { cursor: pointer; transition: filter .1s; }
+        .data-table tbody td { padding: 12px 14px; border-bottom: 1px solid #f4f6fb; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:hover td { filter: brightness(.97); }
+        .row-transit   td { background: #f0f7ff; }
+        .row-delivered td { background: #f0fdf7; }
+        .row-returned  td { background: #fffdf0; }
+        .row-selected td { background: rgba(99,102,241,.07) !important; box-shadow: inset 4px 0 0 var(--primary); }
+
+        .badge-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: .71rem; font-weight: 700; }
+        .badge-Transit   { background: #dbeafe; color: #1d4ed8; }
+        .badge-Delivered { background: #d1fae5; color: #065f46; }
+        .badge-Returned  { background: #fef3c7; color: #92400e; }
+
+        .track-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg,var(--primary),#818cf8);
+            color: #fff;
+            text-decoration: none;
+            font-size: .82rem;
+            transition: transform .15s, box-shadow .15s;
+            box-shadow: 0 2px 8px rgba(99,102,241,.3);
+        }
+        .track-btn:hover { transform: scale(1.12); box-shadow: 0 4px 14px rgba(99,102,241,.5); color: #fff; }
+
+        .row-id   { color: #94a3b8; font-weight: 600; font-size: .78rem; white-space: nowrap; }
+        .row-awb  { font-weight: 700; color: var(--text); letter-spacing: .2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-cost { font-weight: 700; color: var(--text); text-align: right; white-space: nowrap; }
+        .row-date { color: #475569; white-space: nowrap; }
+
+        .empty-state { text-align: center; padding: 70px 20px; }
+        .empty-state .es-icon { font-size: 3.5rem; color: #dde1eb; margin-bottom: 14px; }
+        .empty-state p { color: var(--muted); font-size: .88rem; }
+
+        /* ════════════════ MODAL ════════════════ */
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(10,8,30,.6);
+            backdrop-filter: blur(4px);
+            z-index: 300;
+            align-items: center; justify-content: center;
+        }
+        .modal-backdrop.open { display: flex; animation: bdin .2s ease; }
+        @keyframes bdin { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 22px;
+            width: 480px;
+            max-width: 96vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 28px 90px rgba(0,0,0,.28);
+            animation: mup .25s cubic-bezier(.34,1.56,.64,1);
+        }
+        .modal-box::-webkit-scrollbar { width: 4px; }
+        .modal-box::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+        @keyframes mup { from { transform: translateY(40px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary), #818cf8);
+            padding: 22px 24px;
+            display: flex; align-items: center; gap: 14px;
+            border-radius: 22px 22px 0 0;
+        }
+        .mh-icon { width: 42px; height: 42px; background: rgba(255,255,255,.2); border-radius: 12px; display: grid; place-items: center; color: #fff; font-size: 1.1rem; flex-shrink: 0; }
+        .mh-title { font-size: 1rem; font-weight: 700; color: #fff; }
+        .mh-sub   { font-size: .73rem; color: rgba(255,255,255,.7); margin-top: 2px; }
+        .mh-close { margin-left: auto; background: rgba(255,255,255,.18); border: none; color: #fff; width: 32px; height: 32px; border-radius: 9px; cursor: pointer; font-size: .9rem; display: grid; place-items: center; transition: background .15s; }
+        .mh-close:hover { background: rgba(255,255,255,.3); }
+
+        .modal-body { padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .modal-body .full { grid-column: 1/-1; }
+        .field-group label { font-size: .68rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .6px; display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+        .field-group label i { color: var(--primary); }
+        .field-group .fi { border-radius: 10px; border: 1.5px solid var(--border); font-size: .85rem; padding: 9px 13px; width: 100%; font-family: inherit; transition: border-color .2s, box-shadow .2s; background: #fafbfd; }
+        .field-group .fi:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.12); outline: none; }
+        .file-card { display: none; align-items: center; gap: 10px; border-radius: 11px; padding: 10px 14px; margin-bottom: 8px; }
+        .file-card.inv-card { background: #f0f4ff; border: 1.5px solid #c7d2fe; }
+        .file-card.awb-card { background: #f0fdf4; border: 1.5px solid #a7f3d0; }
+        .fc-icon { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-size: .85rem; flex-shrink: 0; }
+        .inv-card .fc-icon { background: var(--primary); }
+        .awb-card .fc-icon { background: var(--success); }
+        .fc-name { font-size: .78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inv-card .fc-name { color: #3730a3; }
+        .awb-card .fc-name { color: #065f46; }
+        .fc-sub { font-size: .68rem; }
+        .inv-card .fc-sub { color: #818cf8; }
+        .awb-card .fc-sub { color: #34d399; }
+        .fc-open { font-size: .95rem; margin-left: auto; }
+        .inv-card .fc-open { color: var(--primary); }
+        .awb-card .fc-open { color: var(--success); }
+        .file-hint { font-size: .68rem; color: var(--muted); margin-top: 4px; }
+
+        .modal-footer { padding: 16px 24px 22px; display: flex; gap: 10px; background: #f8fafc; border-top: 1px solid var(--border); border-radius: 0 0 22px 22px; }
+        .mf-btn { border-radius: 10px; font-weight: 600; font-size: .82rem; padding: 10px 18px; display: inline-flex; align-items: center; gap: 7px; border: none; cursor: pointer; font-family: inherit; transition: transform .15s, box-shadow .15s; }
+        .mf-btn:hover { transform: translateY(-1px); }
+        .btn-add  { background: linear-gradient(135deg,#10b981,#059669); color:#fff; box-shadow: 0 3px 10px rgba(16,185,129,.3); }
+        .btn-upd  { background: linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow: 0 3px 10px rgba(99,102,241,.3); }
+        .btn-del  { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; box-shadow: 0 3px 10px rgba(239,68,68,.3); }
+        .btn-cxl  { background: #e2e8f0; color: #475569; }
+        .btn-cxl:hover { background: #cbd5e1; }
+
+        /* ════════════════ TOAST ════════════════ */
+        .toasts { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: #1e293b;
+            color: #fff;
+            padding: 13px 18px;
+            border-radius: 13px;
+            font-size: .84rem;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.25);
+            animation: tin .3s ease;
+            min-width: 240px;
+        }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error   { border-left: 4px solid #ef4444; }
+        .toast.info    { border-left: 4px solid var(--primary); }
+        @keyframes tin { from { opacity:0; transform: translateX(50px); } to { opacity:1; transform: none; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {
+            :root { --sidebar-w: 190px; }
+            .sb-brand-text .name { font-size: .85rem; }
+            .stat-grid { grid-template-columns: repeat(2,1fr); }
+            .charts-row { grid-template-columns: 1fr; }
+            .data-table col.col-date   { width: 110px; }
+            .data-table col.col-cost   { width: 90px; }
+            .data-table col.col-status { width: 110px; }
+        }
+        @media (max-width: 800px) {
+            :root { --sidebar-w: 64px; }
+            .sb-brand-text, .sb-section-label, .sb-item span, .sb-user-name, .sb-user-role, .sb-user-av + div { display: none; }
+            .sb-brand { justify-content: center; padding: 18px 0; }
+            .sb-section { padding: 14px 8px 4px; }
+            .sb-item { justify-content: center; padding: 10px 0; }
+            .sb-item .sb-icon { width: 36px; height: 36px; }
+            .sb-bottom { padding: 10px 8px; }
+            .sb-user { justify-content: center; }
+            .data-table col.col-id   { width: 44px; }
+            .data-table col.col-date { width: 90px; }
+            .data-table col.col-cost { width: 76px; }
+            .data-table col.col-status { width: 96px; }
+            .data-table col.col-track  { width: 54px; }
+            .data-table tbody td, .data-table thead th { padding: 10px 10px; }
+            .page { padding: 16px; }
+            .filter-wrap { gap: 10px; }
+            .stat-grid { gap: 12px; }
+        }
+        @media (max-width: 560px) {
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .data-table col.col-date { width: 0; display: none; }
+            .data-table .hide-sm { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar">
+    <div class="sb-brand">
+        <div class="sb-logo"><i class="fas fa-shipping-fast"></i></div>
+        <div class="sb-brand-text">
+            <div class="name">Tracker_WC</div>
+            <div class="sub">Logistics Dashboard</div>
+        </div>
+    </div>
+
+    <div class="sb-section">
+        <div class="sb-section-label">Main Menu</div>
+        <a class="sb-item active" id="nav-dashboard" onclick="navigate('dashboard')">
+            <div class="sb-icon"><i class="fas fa-chart-pie"></i></div>
+            Dashboard
+        </a>
+        <a class="sb-item" id="nav-shipments" onclick="navigate('shipments')">
+            <div class="sb-icon"><i class="fas fa-boxes"></i></div>
+            Shipments
+        </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+        <div class="sb-section-label">Quick Stats</div>
+        <div style="padding: 0 4px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:9px;">
+                <span style="font-size:.75rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:7px;"><i class="fas fa-layer-group" style="color:#a78bfa;width:14px;text-align:center"></i> Total</span>
+                <span id="sideTotal" style="font-size:.82rem;font-weight:700;color:#fff;">—</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:9px;">
+                <span style="font-size:.75rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:7px;"><i class="fas fa-truck-moving" style="color:#60a5fa;width:14px;text-align:center"></i> Transit</span>
+                <span id="sideTransit" style="font-size:.82rem;font-weight:700;color:#fff;">—</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:9px;">
+                <span style="font-size:.75rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:7px;"><i class="fas fa-check-circle" style="color:#34d399;width:14px;text-align:center"></i> Delivered</span>
+                <span id="sideDelivered" style="font-size:.82rem;font-weight:700;color:#fff;">—</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:9px;">
+                <span style="font-size:.75rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:7px;"><i class="fas fa-undo-alt" style="color:#fbbf24;width:14px;text-align:center"></i> Returned</span>
+                <span id="sideReturned" style="font-size:.82rem;font-weight:700;color:#fff;">—</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sb-bottom">
+        <div class="sb-user">
+            <div class="sb-user-av">A</div>
+            <div>
+                <div class="sb-user-name">Admin</div>
+                <div class="sb-user-role">Logistics Manager</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="app-main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-page">
+            <div class="topbar-page-icon" id="topbarIcon"><i class="fas fa-chart-pie"></i></div>
+            <div>
+                <div class="topbar-title" id="topbarTitle">Dashboard</div>
+                <div class="topbar-sub" id="topbarSub">Overview & analytics</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-badge"><i class="fas fa-calendar-alt"></i> <span id="topbarDate"></span></div>
+        </div>
+    </div>
+
+    <!-- ══ DASHBOARD PAGE ══ -->
+    <div class="page active" id="page-dashboard">
+
+        <div class="dash-welcome">
+            <h2>Welcome back, Admin</h2>
+            <p>Here's what's happening with your shipments today.</p>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card sc-total">
+                <div class="sc-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="sc-info">
+                    <div class="value" id="stTotal">0</div>
+                    <div class="label">Total Shipments</div>
+                </div>
+            </div>
+            <div class="stat-card sc-transit">
+                <div class="sc-icon"><i class="fas fa-truck-moving"></i></div>
+                <div class="sc-info">
+                    <div class="value" id="stTransit">0</div>
+                    <div class="label">In Transit</div>
+                </div>
+            </div>
+            <div class="stat-card sc-delivered">
+                <div class="sc-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="sc-info">
+                    <div class="value" id="stDelivered">0</div>
+                    <div class="label">Delivered</div>
+                </div>
+            </div>
+            <div class="stat-card sc-returned">
+                <div class="sc-icon"><i class="fas fa-undo-alt"></i></div>
+                <div class="sc-info">
+                    <div class="value" id="stReturned">0</div>
+                    <div class="label">Returned</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-card-head">
+                    <h3><span class="ch-icon"><i class="fas fa-chart-bar"></i></span> Status Breakdown</h3>
+                    <span class="chart-hint">Click bar to filter</span>
+                </div>
+                <div id="statusChartWrap"><canvas id="statusChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-head">
+                    <h3><span class="ch-icon"><i class="fas fa-calendar-alt"></i></span> Monthly Breakdown</h3>
+                    <span class="chart-hint">Click bar to filter</span>
+                </div>
+                <div id="monthChartWrap"><canvas id="monthChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ SHIPMENTS PAGE ══ -->
+    <div class="page" id="page-shipments">
+
+        <div class="ship-head">
+            <h2><i class="fas fa-boxes me-2" style="color:var(--primary)"></i>All Shipments</h2>
+            <button class="btn-new" onclick="openModal()">
+                <i class="fas fa-plus"></i> New Shipment
+            </button>
+        </div>
+
+        <div class="filter-wrap">
+            <div>
+                <label><i class="fas fa-calendar me-1"></i>Date</label>
+                <input id="filterDate" type="text" class="fc" placeholder="dd/mm/yyyy" style="width:132px">
+            </div>
+            <div>
+                <label><i class="fas fa-search me-1"></i>AWB No.</label>
+                <input id="filterAwb" type="text" class="fc" placeholder="Search AWB…" oninput="loadShipments()" style="width:180px">
+            </div>
+            <div>
+                <label><i class="fas fa-filter me-1"></i>Status</label>
+                <select id="filterStatus" class="fc" onchange="loadShipments()" style="width:148px">
+                    <option value="">All Statuses</option>
+                    <option value="Transit">Transit</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Returned">Returned</option>
+                </select>
+            </div>
+            <button class="btn-reset" onclick="resetFilter()"><i class="fas fa-redo"></i> Reset</button>
+            <div class="filter-pill" id="activeFilterPill">
+                <i class="fas fa-tag"></i>
+                <span id="activeFilterLabel"></span>
+                <span class="pill-x" onclick="clearActiveFilter()">&#x2715;</span>
+            </div>
+            <div class="record-count" id="recordCount"></div>
+        </div>
+
+        <div class="table-wrap">
+            <div class="table-scroll">
+                <table class="data-table">
+                    <colgroup>
+                        <col class="col-id">
+                        <col class="col-date">
+                        <col class="col-awb">
+                        <col class="col-cost">
+                        <col class="col-status">
+                        <col class="col-track">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Date</th>
+                            <th>AWB No.</th>
+                            <th style="text-align:right">Cost</th>
+                            <th style="text-align:center">Status</th>
+                            <th style="text-align:center">Track</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div><!-- end app-main -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="backdropClick(event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="mh-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div>
+                <div class="mh-title" id="modalTitle">New Shipment</div>
+                <div class="mh-sub"   id="modalSub">Fill in the shipment details below</div>
+            </div>
+            <button class="mh-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="field-group">
+                <label><i class="fas fa-calendar-alt"></i> Date</label>
+                <input id="fDate" type="text" class="fi">
+            </div>
+            <div class="field-group">
+                <label><i class="fas fa-tag"></i> Status</label>
+                <select id="fStatus" class="fi">
+                    <option value="Transit">Transit</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Returned">Returned</option>
+                </select>
+            </div>
+            <div class="field-group full">
+                <label><i class="fas fa-barcode"></i> AWB No. <span style="color:#ef4444">*</span></label>
+                <input id="fAwb" type="text" class="fi" placeholder="Enter AWB number">
+            </div>
+            <div class="field-group full">
+                <label><i class="fas fa-dollar-sign"></i> Shipping Cost</label>
+                <input id="fCost" type="number" step="0.01" min="0" class="fi" placeholder="0.00">
+            </div>
+            <div class="field-group full">
+                <label><i class="fas fa-file-invoice"></i> Invoice File</label>
+                <div id="fInvoiceCard" class="file-card inv-card">
+                    <div class="fc-icon"><i class="fas fa-file-invoice"></i></div>
+                    <div style="flex:1;min-width:0">
+                        <div id="fInvoiceCardName" class="fc-name"></div>
+                        <div class="fc-sub">Attached file</div>
+                    </div>
+                    <a id="fInvoiceCardOpen" href="#" target="_blank" class="fc-open"><i class="fas fa-external-link-alt"></i></a>
+                </div>
+                <input id="fInvoice" type="file" class="fi" accept=".pdf,.png,.jpg,.jpeg">
+                <div class="file-hint">Upload a new file to replace existing</div>
+            </div>
+            <div class="field-group full">
+                <label><i class="fas fa-file-alt"></i> AWB File</label>
+                <div id="fAwbFileCard" class="file-card awb-card">
+                    <div class="fc-icon"><i class="fas fa-file-alt"></i></div>
+                    <div style="flex:1;min-width:0">
+                        <div id="fAwbFileCardName" class="fc-name"></div>
+                        <div class="fc-sub">Attached file</div>
+                    </div>
+                    <a id="fAwbFileCardOpen" href="#" target="_blank" class="fc-open"><i class="fas fa-external-link-alt"></i></a>
+                </div>
+                <input id="fAwbFile" type="file" class="fi" accept=".pdf,.png,.jpg,.jpeg">
+                <div class="file-hint">Upload a new file to replace existing</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="mf-btn btn-add" id="btnAdd"    onclick="addShipment()"><i class="fas fa-plus"></i> Add</button>
+            <button class="mf-btn btn-upd" id="btnUpdate" onclick="updateShipment()" style="display:none"><i class="fas fa-pen"></i> Update</button>
+            <button class="mf-btn btn-del" id="btnDelete" onclick="deleteShipment()" style="display:none"><i class="fas fa-trash"></i> Delete</button>
+            <button class="mf-btn btn-cxl" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    let selectedId = null, currentInvoiceFile = '', currentAwbFile = '';
+    let statusChart = null, monthChart = null;
+    let activeFilter = null;
+
+    // ── Init ──
+    document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+
+    const datePicker       = flatpickr('#fDate',      { dateFormat:'d/m/Y', defaultDate:'today' });
+    const filterDatePicker = flatpickr('#filterDate', { dateFormat:'d/m/Y', onChange:()=>loadShipments() });
+
+    // ── Navigation ──
+    const pages = {
+        dashboard: { title:'Dashboard', sub:'Overview & analytics', icon:'fa-chart-pie' },
+        shipments: { title:'Shipments', sub:'Manage all shipment records', icon:'fa-boxes' }
+    };
+    function navigate(page) {
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+        document.getElementById('page-'+page).classList.add('active');
+        document.getElementById('nav-'+page).classList.add('active');
+        const p = pages[page];
+        document.getElementById('topbarTitle').textContent = p.title;
+        document.getElementById('topbarSub').textContent   = p.sub;
+        document.getElementById('topbarIcon').innerHTML    = `<i class="fas ${p.icon}"></i>`;
+        if (page==='dashboard') loadDashboard();
+        if (page==='shipments') loadShipments();
+    }
+
+    // ── Dashboard ──
+    async function loadDashboard() {
+        const [dRes, mRes] = await Promise.all([fetch('/api/dashboard'), fetch('/api/monthly')]);
+        const dash = await dRes.json();
+        const monthly = await mRes.json();
+
+        ['Total','Transit','Delivered','Returned'].forEach(k => {
+            document.getElementById('st'+k).textContent = dash[k.toLowerCase()];
+        });
+        document.getElementById('sideTotal').textContent     = dash.total;
+        document.getElementById('sideTransit').textContent   = dash.transit;
+        document.getElementById('sideDelivered').textContent = dash.delivered;
+        document.getElementById('sideReturned').textContent  = dash.returned;
+
+        // Status bar
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), {
+            type:'bar',
+            data:{
+                labels:['Transit','Delivered','Returned'],
+                datasets:[{
+                    data:[dash.transit, dash.delivered, dash.returned],
+                    backgroundColor:['rgba(59,130,246,.85)','rgba(16,185,129,.85)','rgba(245,158,11,.85)'],
+                    hoverBackgroundColor:['#3b82f6','#10b981','#f59e0b'],
+                    borderRadius:10, borderSkipped:false, barThickness:52
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                layout:{padding:{top:28}},
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.parsed.y+' shipments'}} },
+                scales:{
+                    x:{grid:{display:false}, ticks:{font:{size:12,weight:'600'}}},
+                    y:{beginAtZero:true, ticks:{stepSize:1,precision:0,font:{size:11}}, grid:{color:'#f1f5f9'}}
+                },
+                onClick(e,els){ if(!els.length)return; const l=['Transit','Delivered','Returned'][els[0].index]; applyDashFilter({type:'status',value:l,label:'Status: '+l}); },
+                animation:{onComplete(){ drawLabels(this); }}
+            }
+        });
+
+        // Monthly bar
+        if (monthChart) monthChart.destroy();
+        const totals = monthly.map(r=>r.transit+r.delivered+r.returned);
+        monthChart = new Chart(document.getElementById('monthChart'), {
+            type:'bar',
+            data:{
+                labels:monthly.map(r=>r.month),
+                datasets:[{
+                    label:'Shipments', data:totals,
+                    backgroundColor:'rgba(99,102,241,.8)',
+                    hoverBackgroundColor:'#6366f1',
+                    borderRadius:10, borderSkipped:false
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                layout:{padding:{top:28}},
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.parsed.y+' shipments'}} },
+                scales:{
+                    x:{grid:{display:false}, ticks:{font:{size:11}}},
+                    y:{beginAtZero:true, ticks:{stepSize:1,precision:0,font:{size:11}}, grid:{color:'#f1f5f9'}}
+                },
+                onClick(e,els){ if(!els.length)return; const m=monthly[els[0].index].month; applyDashFilter({type:'month',value:m,label:'Month: '+m}); },
+                animation:{onComplete(){ drawLabels(this); }}
+            }
+        });
+    }
+
+    function drawLabels(chart) {
+        const {ctx, data, scales:{x,y}} = chart;
+        ctx.save();
+        ctx.font = 'bold 12px Inter, Segoe UI, sans-serif';
+        ctx.fillStyle = '#1e293b';
+        ctx.textAlign = 'center';
+        data.datasets[0].data.forEach((v,i)=>{ ctx.fillText(v, x.getPixelForValue(i), y.getPixelForValue(v)-9); });
+        ctx.restore();
+    }
+
+    // ── Dashboard → Shipments ──
+    function applyDashFilter(f) { activeFilter=f; navigate('shipments'); }
+    function clearActiveFilter() { activeFilter=null; document.getElementById('activeFilterPill').style.display='none'; loadShipments(); }
+
+    // ── Shipments ──
+    function fmt(ddmm) { const [d,m,y]=ddmm.split('/'); const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${d}, ${mo[+m-1]}, ${y}`; }
+    function parseSrv(sd) { try { const p=sd.replace(/,/g,'').split(' ').filter(Boolean); const mo={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'}; return `${p[0]}/${mo[p[1]]}/${p[2]}`; } catch{return '';} }
+    function base(p) { return p?p.replace(/\\/g,'/').split('/').pop():''; }
+
+    async function loadShipments() {
+        const params = new URLSearchParams();
+        const fd=document.getElementById('filterDate').value, fa=document.getElementById('filterAwb').value.trim(), fs=document.getElementById('filterStatus').value;
+        if(fd) params.set('date',fmt(fd));
+        if(fa) params.set('awb',fa);
+        if(fs) params.set('status',fs);
+        const pill=document.getElementById('activeFilterPill');
+        if(activeFilter){
+            if(activeFilter.type==='status') params.set('status',activeFilter.value);
+            if(activeFilter.type==='month')  params.set('month',activeFilter.value);
+            document.getElementById('activeFilterLabel').textContent=activeFilter.label;
+            pill.style.display='flex';
+        } else { pill.style.display='none'; }
+        const rows=await(await fetch('/api/shipments?'+params)).json();
+        renderTable(rows);
+    }
+
+    function renderTable(rows) {
+        const tbody=document.getElementById('tBody');
+        document.getElementById('recordCount').textContent=rows.length+' record'+(rows.length!==1?'s':'');
+        tbody.innerHTML='';
+        if(!rows.length){ tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="es-icon"><i class="fas fa-box-open"></i></div><p>No shipments found</p></div></td></tr>`; return; }
+        rows.forEach(s=>{
+            const tr=document.createElement('tr');
+            tr.className='row-'+s.status.toLowerCase();
+            if(s.id===selectedId) tr.classList.add('row-selected');
+            tr.innerHTML=`
+                <td class="row-id">#${s.id}</td>
+                <td class="row-date">${s.ship_date}</td>
+                <td class="row-awb">${s.awb}</td>
+                <td class="row-cost">${parseFloat(s.shipping_cost).toFixed(2)}</td>
+                <td style="text-align:center"><span class="badge-pill badge-${s.status}"><i class="fas ${s.status==='Transit'?'fa-truck-moving':s.status==='Delivered'?'fa-check':'fa-undo-alt'}"></i>${s.status}</span></td>
+                <td style="text-align:center" onclick="event.stopPropagation()">
+                    <a class="track-btn" href="https://parcelsapp.com/en/tracking/${encodeURIComponent(s.awb)}" target="_blank" title="Track ${s.awb}"><i class="fas fa-satellite-dish"></i></a>
+                </td>`;
+            tr.onclick=()=>openModal(s,tr);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function resetFilter() { activeFilter=null; filterDatePicker.clear(); document.getElementById('filterAwb').value=''; document.getElementById('filterStatus').value=''; loadShipments(); }
+
+    // ── Modal ──
+    function showFC(cardId,nameId,linkId,fn){ const c=document.getElementById(cardId); if(fn){c.style.display='flex';document.getElementById(nameId).textContent=fn;document.getElementById(linkId).href='/uploads/'+encodeURIComponent(fn);}else{c.style.display='none';} }
+
+    function openModal(s,tr){
+        selectedId=null; currentInvoiceFile=''; currentAwbFile='';
+        if(s){
+            selectedId=s.id; currentInvoiceFile=base(s.invoice_file); currentAwbFile=base(s.awb_file);
+            document.getElementById('modalTitle').textContent='Edit Shipment';
+            document.getElementById('modalSub').textContent='AWB: '+s.awb;
+            document.getElementById('btnAdd').style.display='none';
+            document.getElementById('btnUpdate').style.display='';
+            document.getElementById('btnDelete').style.display='';
+            const p=parseSrv(s.ship_date); if(p) datePicker.setDate(p,true);
+            document.getElementById('fAwb').value=s.awb;
+            document.getElementById('fCost').value=s.shipping_cost;
+            document.getElementById('fStatus').value=s.status;
+            document.getElementById('fInvoice').value='';
+            document.getElementById('fAwbFile').value='';
+            showFC('fInvoiceCard','fInvoiceCardName','fInvoiceCardOpen',currentInvoiceFile);
+            showFC('fAwbFileCard','fAwbFileCardName','fAwbFileCardOpen',currentAwbFile);
+            document.querySelectorAll('#tBody tr').forEach(r=>r.classList.remove('row-selected'));
+            if(tr) tr.classList.add('row-selected');
+        } else {
+            document.getElementById('modalTitle').textContent='New Shipment';
+            document.getElementById('modalSub').textContent='Fill in the shipment details below';
+            document.getElementById('btnAdd').style.display='';
+            document.getElementById('btnUpdate').style.display='none';
+            document.getElementById('btnDelete').style.display='none';
+            datePicker.setDate('today',true);
+            ['fAwb','fCost'].forEach(id=>document.getElementById(id).value='');
+            document.getElementById('fStatus').value='Transit';
+            ['fInvoice','fAwbFile'].forEach(id=>document.getElementById(id).value='');
+            showFC('fInvoiceCard','fInvoiceCardName','fInvoiceCardOpen','');
+            showFC('fAwbFileCard','fAwbFileCardName','fAwbFileCardOpen','');
+        }
+        document.getElementById('modalBackdrop').classList.add('open');
+    }
+    function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
+    function backdropClick(e){ if(e.target===document.getElementById('modalBackdrop')) closeModal(); }
+
+    function buildFD(){
+        const dv=document.getElementById('fDate').value, fd=new FormData();
+        fd.append('ship_date', dv?fmt(dv):'');
+        fd.append('awb', document.getElementById('fAwb').value.trim());
+        fd.append('shipping_cost', document.getElementById('fCost').value||'0');
+        fd.append('status', document.getElementById('fStatus').value);
+        fd.append('invoice_file_current', currentInvoiceFile);
+        fd.append('awb_file_current', currentAwbFile);
+        const inv=document.getElementById('fInvoice').files[0], awb=document.getElementById('fAwbFile').files[0];
+        if(inv) fd.append('invoice_file',inv);
+        if(awb) fd.append('awb_file',awb);
+        return fd;
+    }
+
+    async function addShipment(){ const r=await fetch('/api/shipments',{method:'POST',body:buildFD()}); const d=await r.json(); if(!r.ok){toast(d.error,'error');return;} toast('Shipment added!','success'); closeModal(); loadShipments(); loadDashboard(); }
+    async function updateShipment(){ const r=await fetch('/api/shipments/'+selectedId,{method:'PUT',body:buildFD()}); const d=await r.json(); if(!r.ok){toast(d.error,'error');return;} toast('Shipment updated!','success'); closeModal(); loadShipments(); loadDashboard(); }
+    async function deleteShipment(){ if(!confirm('Delete this shipment?'))return; await fetch('/api/shipments/'+selectedId,{method:'DELETE'}); toast('Shipment deleted','info'); closeModal(); loadShipments(); loadDashboard(); }
+
+    // ── Toast ──
+    function toast(msg,type='success'){
+        const ic={success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+        const co={success:'#10b981',error:'#ef4444',info:'#6366f1'};
+        const el=document.createElement('div');
+        el.className=`toast ${type}`;
+        el.innerHTML=`<i class="fas ${ic[type]}" style="color:${co[type]}"></i>${msg}`;
+        document.getElementById('toasts').appendChild(el);
+        setTimeout(()=>{el.style.transition='.3s';el.style.opacity='0';el.style.transform='translateX(50px)';setTimeout(()=>el.remove(),300);},3000);
+    }
+
+    // ── Boot ──
+    loadDashboard();
+</script>
+</body>
+</html>
